@@ -30,4 +30,16 @@ namespace eng
         return img;
     }
 
+    template<>
+    sf::SoundBuffer*  ResourceManager::Load<sf::SoundBuffer>(const sf::String& filename)
+    {
+        sf::SoundBuffer *buffer;
+        if (!buffer->LoadFromFile(filename))
+        {
+            delete buffer;
+            return 0;
+        }
+        return buffer;
+    }
+
 }

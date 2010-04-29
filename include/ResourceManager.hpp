@@ -12,6 +12,9 @@
 #include <SFML/Graphics/Image.hpp>
 typedef boost::shared_ptr<sf::Image>        ImagePtr;
 
+#include <SFML/Audio.hpp>
+typedef boost::shared_ptr<sf::SoundBuffer>        SoundPtr;
+
 // ------------------------------------------
 
 namespace eng

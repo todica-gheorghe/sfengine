@@ -9,7 +9,6 @@
 #include <AnimatedObject.hpp>
 #include <UserInterface.hpp>
 #include <Icon.hpp>
-#include <Map.hpp>
 #include <Utils.hpp>
 
 #include <SFML/Graphics/View.hpp>
@@ -36,23 +35,6 @@ namespace sf
     class SocketBind
     {
 
-    };
-
-    class ThreadBind : public Thread
-    {
-        public:
-            ThreadBind(const luabind::object& func)
-            {
-                myFunc = func;
-            }
-
-        private:
-            void    Run()
-            {
-                luabind::call_function<void>(myFunc);
-            }
-
-            luabind::object myFunc;
     };
 
     static const char* StringToChars(const sf::String& str)
@@ -84,6 +66,13 @@ sf::Shape   Shape_Circle(float x, float y, float radius, const sf::Color& color)
     return sf::Shape::Circle(x, y, radius, color);
 }
 
+sf::Sound    Sound_Create(const char* name)
+{
+    sf::Sound sound;
+    sound.SetBuffer(*eng::ResourceManager::Get()->GetResource<sf::SoundBuffer>(name));
+    return sound;
+}
+
 namespace eng
 {
 
@@ -106,11 +95,6 @@ namespace eng
         [
 
             luabind::class_<sf::VideoMode>("VideoMode").def(luabind::constructor<int, int>()),
-
-            luabind::class_<sf::ThreadBind>("Thread")
-                .def(luabind::constructor<const luabind::object&>())
-                .def("Launch", &sf::ThreadBind::Launch)
-                .def("Wait", &sf::ThreadBind::Wait),
 
             luabind::class_<std::string>("StdString")
                 .def(luabind::constructor<const char*>())
@@ -411,6 +395,19 @@ namespace eng
             luabind::class_<ImagePtr>("ImagePtr")
                 .def(luabind::constructor<>()),
 
+            luabind::class_<SoundPtr>("SoundPtr")
+                .def(luabind::constructor<>()),
+
+            luabind::class_<sf::Sound>("Sound")
+                .def("Play", &sf::Sound::Play)
+                .def("Pause", &sf::Sound::Pause)
+                .def("SetVolume", &sf::Sound::SetVolume)
+                .def("GetVolume", &sf::Sound::GetVolume)
+                .def("SetPosition", (void (sf::Sound::*)(float, float, float))&sf::Sound::SetPosition)
+                .def("GetPosition", &sf::Sound::GetPosition)
+                .def("SetPitch", &sf::Sound::SetPitch)
+                .def("GetPitch", &sf::Sound::GetPitch),
+
             luabind::class_<eng::Animation::Frame>("Frame")
                 .def("SetColor", &eng::Animation::Frame::SetColor)
                 .def_readwrite("color", &eng::Animation::Frame::color)
@@ -465,25 +462,7 @@ namespace eng
                 .def("SetSubRect", &eng::Icon::SetSubRect)
                 .def("GetSubRect", &eng::Icon::GetSubRect),
 
-            luabind::class_<Map, eng::Scene>("Map")
-                .def(luabind::constructor<const sf::Vector2i&>())
-                .def("AddLayer", &Map::AddLayer)
-                .def("GetLayer", &Map::GetLayer)
-                .def("GetMapSize", &Map::GetMapSize)
-                .def("GetNbLayers", &Map::GetNbLayers)
-                .def("RemoveLayer", &Map::RemoveLayer)
-                .def("LoadFromFile", &Map::LoadFromFile),
-
-            luabind::class_<Layer, eng::Object>("Layer")
-                .def(luabind::constructor<const sf::Vector2i&>())
-                .def(luabind::constructor<Layer*>())
-                .def("SetCollidable", &Layer::SetCollidable)
-                .def("IsCollidable", &Layer::IsCollidable)
-                .def("Reset", &Layer::Reset)
-                .def("SetTile", &Layer::SetTile)
-                .def("GetTile", &Layer::GetTile)
-                .def("RemoveTile", &Layer::RemoveTile),
-
+            // Xml module
             luabind::class_<TiXmlElement>("XmlElement")
                 .def(luabind::constructor<const char*>())
                 .def("Attribute", (const char* (TiXmlElement::*)(const char*) const)&TiXmlElement::Attribute)
@@ -561,6 +540,7 @@ namespace eng
             luabind::def("Get", &eng::ResourceManager::Get),
             luabind::class_<eng::ResourceManager>("ResourceManager")
                 .def("GetImage", &eng::ResourceManager::GetResource<sf::Image>)
+                .def("GetSound", &Sound_Create)
         ];
 
         luabind::module(myState, "UIManager")
@@ -599,9 +579,6 @@ namespace eng
                 .def("Display", &SceneManager::Display)
                 .def("GetScene", &SceneManager::GetScene)
         ];
-
-
-        LogManager::Get()->Log("The ScriptManager is initialized.");
     }
 
     lua_State*  ScriptManager::GetLuaState() const
