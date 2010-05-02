@@ -8,7 +8,7 @@
 namespace eng
 {
 
-    Animation::Animation(ImagePtr& image)
+    Animation::Animation(const ImagePtr& image)
         :   myImage(image)
     {
 

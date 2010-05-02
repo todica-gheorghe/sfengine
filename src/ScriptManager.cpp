@@ -10,6 +10,7 @@
 #include <UserInterface.hpp>
 #include <Icon.hpp>
 #include <Utils.hpp>
+#include <Package.hpp>
 
 #include <SFML/Graphics/View.hpp>
 #include <boost/any.hpp>
@@ -19,6 +20,9 @@
 #include <SFML/Network.hpp>
 
 #include <luabind/operator.hpp>
+#include <luabind/return_reference_to_policy.hpp>
+#include <luabind/out_value_policy.hpp>
+#include <luabind/dependency_policy.hpp>
 
 namespace sf
 {
@@ -49,6 +53,7 @@ bool    TiXmlDocument::LoadFile()
     return LoadFile(TIXML_DEFAULT_ENCODING);
 }
 
+
 #include <SFML/Graphics.hpp>
 
 sf::Shape   Shape_Line(float x1, float x2, float y1, float y2, float t, const sf::Color& col)
@@ -78,11 +83,6 @@ namespace eng
 
     template<>
     ScriptManager*  Singleton<ScriptManager>::myInstance = 0;
-
-    void        LoadScriptFile(const char* script)
-    {
-        ScriptManager::Get()->LoadScript(script);
-    }
 
     ScriptManager::ScriptManager()
     {
@@ -303,7 +303,15 @@ namespace eng
                 .def("SetY", &sf::Drawable::SetY)
                 .def("GetPosition", &sf::Drawable::GetPosition)
                 .def("Move", (void (sf::Drawable::*)(float, float))&sf::Drawable::Move)
-                .def("Move", (void (sf::Drawable::*)(const sf::Vector2f&))&sf::Drawable::Move),
+                .def("Move", (void (sf::Drawable::*)(const sf::Vector2f&))&sf::Drawable::Move)
+                .def("SetBlendMode", &sf::Drawable::SetBlendMode)
+                .enum_("BlendMode")
+                [
+                    luabind::value("Alpha", 0),
+                    luabind::value("Add", 1),
+                    luabind::value("Multiply", 2),
+                    luabind::value("None", 3)
+                ],
 
             luabind::class_<sf::Sprite, sf::Drawable>("Sprite")
                 .def(luabind::constructor<>())
@@ -311,7 +319,9 @@ namespace eng
                 .def("Resize", (void (sf::Sprite::*)(const sf::Vector2f&))&sf::Sprite::Resize)
                 .def("GetSize", &sf::Sprite::GetSize)
                 .def("Rotate", &sf::Sprite::Rotate)
-                .def("SetImage", (void (sf::Sprite::*)(sf::Image*))&sf::Sprite::SetImage),
+                .def("SetImage", (void (sf::Sprite::*)(sf::Image*))&sf::Sprite::SetImage)
+                .def("SetSubRect", &sf::Sprite::SetSubRect)
+                .def("GetSubRect", &sf::Sprite::GetSubRect),
 
             luabind::class_<sf::Text, sf::Drawable>("Text")
                 .def(luabind::constructor<const char*>())
@@ -319,7 +329,11 @@ namespace eng
 
             luabind::class_<sf::Image>("Image")
                 .def(luabind::constructor<>())
-                .def("Load", &sf::Image::LoadFromFile),
+                .def("LoadFromFile", &sf::Image::LoadFromFile)
+                .def("LoadFromMemory", &sf::Image::LoadFromMemory)
+                .def("GetWidth", &sf::Image::GetWidth)
+                .def("GetHeight", &sf::Image::GetHeight)
+                .def("CopyScreen", &sf::Image::CopyScreen),
 
 
             luabind::class_<sf::Shape, sf::Drawable>("Shape")
@@ -344,26 +358,35 @@ namespace eng
                 .def("GetMouseY", &sf::Input::GetMouseY)
                 .def("IsMouseButtonDown", &sf::Input::IsMouseButtonDown),
 
+            luabind::class_<sf::Renderer>("Renderer")
+                .def("SetShader", &sf::Renderer::SetShader)
+                .def("SetTexture", &sf::Renderer::SetTexture)
+                .def("SetColor", &sf::Renderer::SetColor)
+                .def("ApplyColor", &sf::Renderer::ApplyColor),
+
+
             luabind::class_<sf::RenderWindow>("RenderWindow")
                 .def(luabind::constructor<sf::VideoMode, const char*>())
+                .def("Clear", &sf::RenderTarget::Clear)
+                .def("Draw", (void (sf::RenderTarget::*)(const sf::Drawable&))&sf::RenderTarget::Draw)
+                .def("Draw", (void (sf::RenderTarget::*)(const sf::Drawable&, const sf::Shader&))&sf::RenderTarget::Draw)
+                .def("GetWidth", &sf::RenderTarget::GetWidth)
+                .def("GetHeight", &sf::RenderTarget::GetHeight)
+                .def("SetView", &sf::RenderTarget::SetView)
+                .def("GetDefaultView", &sf::RenderTarget::GetDefaultView)
+                .def("GetView", &sf::RenderTarget::GetView)
                 .def("Close", &sf::RenderWindow::Close)
-                .def("Clear", &sf::RenderWindow::Clear)
-                .def("Draw", (void (sf::RenderWindow::*)(const sf::Drawable&))&sf::RenderWindow::Draw)
                 .def("Display", &sf::RenderWindow::Display)
                 .def("GetEvent", &sf::RenderWindow::GetEvent)
                 .def("GetFrameTime", &sf::RenderWindow::GetFrameTime)
                 .def("IsOpened", &sf::RenderWindow::IsOpened)
                 .def("GetInput", &sf::RenderWindow::GetInput)
-                .def("GetWidth", &sf::RenderWindow::GetWidth)
-                .def("GetHeight", &sf::RenderWindow::GetHeight)
                 .def("ShowMouseCursor", &sf::RenderWindow::ShowMouseCursor)
                 .def("SetCursorPosition", &sf::RenderWindow::SetCursorPosition)
                 .def("SetFramerateLimit", &sf::RenderWindow::SetFramerateLimit)
                 .def("SetPosition", &sf::RenderWindow::SetPosition)
                 .def("SetSize", &sf::RenderWindow::SetSize)
-                .def("SetView", &sf::RenderWindow::SetView)
-                .def("GetView", &sf::RenderWindow::GetView)
-                .def("GetDefaultView", &sf::RenderWindow::GetDefaultView),
+                .def("UseVerticalSync", &sf::RenderWindow::UseVerticalSync),
 
             luabind::class_<eng::Object, sf::Drawable>("Object")
                 .def(luabind::constructor<const char*>())
@@ -386,14 +409,29 @@ namespace eng
                 .def("Clear", &eng::Object::Clear)
                 .def("Find", &eng::Object::FindObjectByName)
                 .def("OnUpdate", &eng::Object::SetUpdateCallback)
+                .def("OnDraw", &eng::Object::SetDrawCallback)
                 .def("OnResize", &eng::Object::SetResizeCallback)
                 .def("OnEvent", &eng::Object::SetEventCallback),
+
+            luabind::class_<sf::Shader>("Shader")
+                .def(luabind::constructor<>())
+                .def("LoadFromFile", &sf::Shader::LoadFromFile)
+                .def("LoadFromMemory", &sf::Shader::LoadFromMemory)
+                .def("SetParameter", (void (sf::Shader::*)(const std::string&, float))&sf::Shader::SetParameter)
+                .def("SetParameter", (void (sf::Shader::*)(const std::string&, float, float))&sf::Shader::SetParameter)
+                .def("SetParameter", (void (sf::Shader::*)(const std::string&, float, float, float))&sf::Shader::SetParameter)
+                .def("SetParameter", (void (sf::Shader::*)(const std::string&, float, float, float, float))&sf::Shader::SetParameter)
+                .def("SetParameter", (void (sf::Shader::*)(const std::string&, const sf::Vector2f&))&sf::Shader::SetParameter)
+                .def("SetParameter", (void (sf::Shader::*)(const std::string&, const sf::Vector3f&))&sf::Shader::SetParameter)
+                .def("SetTexture", &sf::Shader::SetTexture),
 
             luabind::class_<eng::Scene, eng::Object>("Scene")
                 .def(luabind::constructor<const char*>()),
 
             luabind::class_<ImagePtr>("ImagePtr")
-                .def(luabind::constructor<>()),
+                .def(luabind::constructor<>())
+                .def(luabind::constructor<sf::Image*>())
+                .def("Get", &ImagePtr::get),
 
             luabind::class_<SoundPtr>("SoundPtr")
                 .def(luabind::constructor<>()),
@@ -415,7 +453,7 @@ namespace eng
 
             luabind::class_<eng::Animation>("Animation")
                 .def(luabind::constructor<const char*>())
-                .def(luabind::constructor<ImagePtr&>())
+                .def(luabind::constructor<const ImagePtr&>())
                 .def("AddFrame", &eng::Animation::AddFrame)
                 .def("Clear", &eng::Animation::Clear)
                 .def("GetFrame", &eng::Animation::GetFrame)
@@ -440,7 +478,8 @@ namespace eng
 
             luabind::class_<sf::Font>("Font")
                 .def(luabind::constructor<>())
-                .def("Load", &sf::Font::LoadFromFile),
+                .def("LoadFromFile", &sf::Font::LoadFromFile)
+                .def("LoadFromMemory", &sf::Font::LoadFromMemory),
 
             luabind::class_<eng::Label, eng::Object>("Label")
                 .def(luabind::constructor<const char*, unsigned int>())
@@ -461,6 +500,10 @@ namespace eng
                 .def("SetImage", (void (eng::Icon::*)(const sf::String&, bool))&eng::Icon::SetImage)
                 .def("SetSubRect", &eng::Icon::SetSubRect)
                 .def("GetSubRect", &eng::Icon::GetSubRect),
+
+            luabind::class_<Package>("Package")
+                .def("GetFile", &Package::GetFile)
+                .def("GetFileSize", &Package::GetFileSize),
 
             // Xml module
             luabind::class_<TiXmlElement>("XmlElement")
@@ -539,7 +582,9 @@ namespace eng
         [
             luabind::def("Get", &eng::ResourceManager::Get),
             luabind::class_<eng::ResourceManager>("ResourceManager")
+                .def("CreatePackage", &eng::ResourceManager::CreatePackage)
                 .def("GetImage", &eng::ResourceManager::GetResource<sf::Image>)
+                .def("GetPackage", &eng::ResourceManager::GetResource<Package>)
                 .def("GetSound", &Sound_Create)
         ];
 
@@ -579,6 +624,14 @@ namespace eng
                 .def("Display", &SceneManager::Display)
                 .def("GetScene", &SceneManager::GetScene)
         ];
+
+        luabind::module(myState, "ScriptManager")
+        [
+            luabind::def("Get", &ScriptManager::Get),
+            luabind::class_<ScriptManager>("ScriptManager")
+                .def("Run", (void (eng::ScriptManager::*)(const sf::String&))&ScriptManager::Run)
+                .def("Run", (void (eng::ScriptManager::*)(const sf::String&, const sf::String&))&ScriptManager::Run)
+        ];
     }
 
     lua_State*  ScriptManager::GetLuaState() const
@@ -591,7 +644,26 @@ namespace eng
         lua_close(myState);
     }
 
-    void     ScriptManager::LoadScript(const sf::String& script)
+    void    ScriptManager::Run(const sf::String& packname, const sf::String& filename)
+    {
+        PackagePtr package = eng::ResourceManager::Get()->GetResource<Package>(packname);
+
+        const char* script = package->GetFile(filename);
+        sf::Uint32 size = package->GetFileSize(filename);
+
+        char* test = new char[size + 1];
+        memset(test, 0, size + 1);
+        memcpy(test, script, size);
+
+        int scriptError = luaL_dostring(myState, test);
+
+        if (scriptError)
+            LogManager::Get()->Error(sf::String(lua_tostring(myState, -1)));
+
+        delete test;
+    }
+
+    void     ScriptManager::Run(const sf::String& script)
     {
         int scriptError = luaL_dofile(myState, script.ToAnsiString().c_str());
 

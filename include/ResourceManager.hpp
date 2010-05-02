@@ -4,16 +4,20 @@
 #include <Singleton.hpp>
 #include <SFML/System/String.hpp>
 
+#include <vector>
 #include <map>
 #include <boost/any.hpp>
 #include <boost/shared_ptr.hpp>
 
 // RESOURCES definitions --------------------
+#include <Package.hpp>
+typedef boost::shared_ptr<Package>          PackagePtr;
+
 #include <SFML/Graphics/Image.hpp>
 typedef boost::shared_ptr<sf::Image>        ImagePtr;
 
 #include <SFML/Audio.hpp>
-typedef boost::shared_ptr<sf::SoundBuffer>        SoundPtr;
+typedef boost::shared_ptr<sf::SoundBuffer>  SoundPtr;
 
 // ------------------------------------------
 
@@ -38,6 +42,13 @@ namespace eng
                 return boost::any_cast<boost::shared_ptr<T> >(myResources[filename]);
             }
 
+            Package*    CreatePackage(const sf::String& filename, const sf::String& directory)
+            {
+                Package* pack = new Package(filename, directory);
+                myResources[filename] = boost::shared_ptr<Package>(pack);
+                return pack;
+            }
+
             template<typename T>
             T*  Load(const sf::String& filename);
 
@@ -48,7 +59,6 @@ namespace eng
 
         private:
             Resources               myResources;
-
 
     };
 }

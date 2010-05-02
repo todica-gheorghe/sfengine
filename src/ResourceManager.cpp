@@ -33,7 +33,7 @@ namespace eng
     template<>
     sf::SoundBuffer*  ResourceManager::Load<sf::SoundBuffer>(const sf::String& filename)
     {
-        sf::SoundBuffer *buffer;
+        sf::SoundBuffer *buffer = new sf::SoundBuffer();
         if (!buffer->LoadFromFile(filename))
         {
             delete buffer;
@@ -42,4 +42,10 @@ namespace eng
         return buffer;
     }
 
+    template<>
+    Package*  ResourceManager::Load<Package>(const sf::String& filename)
+    {
+        Package* pack = new Package();
+        return pack;
+    }
 }

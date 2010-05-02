@@ -241,20 +241,31 @@ namespace eng
         }
     }
 
+    void    Object::SetDrawCallback(const luabind::object& callback)
+    {
+        myDrawCallback = callback;
+    }
+
     void    Object::Render(sf::RenderTarget& target, sf::Renderer& renderer) const
     {
         if (!IsVisible())
             return;
 
-        renderer.SetColor(GetColor());
-        renderer.SetTexture(0);
+        if (myDrawCallback && luabind::type(myDrawCallback) == LUA_TFUNCTION)
+            luabind::call_function<void>(myDrawCallback, boost::ref(renderer));
+        else
+        {
+            renderer.SetColor(GetColor());
+            renderer.SetTexture(0);
 
-        renderer.Begin(sf::Renderer::TriangleStrip);
-        renderer.AddVertex(0, 0);
-        renderer.AddVertex(mySize.x, 0);
-        renderer.AddVertex(0, mySize.y);
-        renderer.AddVertex(mySize.x, mySize.y);
-        renderer.End();
+            renderer.Begin(sf::Renderer::TriangleStrip);
+            renderer.AddVertex(0, 0);
+            renderer.AddVertex(mySize.x, 0);
+            renderer.AddVertex(0, mySize.y);
+            renderer.AddVertex(mySize.x, mySize.y);
+            renderer.End();
+        }
+
 
         size_t max = myChildren.size();
         for (size_t i = 0; i < max; ++i)

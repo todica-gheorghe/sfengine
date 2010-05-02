@@ -70,6 +70,7 @@ namespace eng
 
             void                SetResizeCallback(const luabind::object& callback);
             void                SetUpdateCallback(const luabind::object& callback);
+            void                SetDrawCallback(const luabind::object& callback);
             void                SetEventCallback(const luabind::object& callback);
 
             virtual void        Update(float elapsedTime);
@@ -100,7 +101,7 @@ namespace eng
             bool                myEnabled;
             bool                myFocusable;
 
-            luabind::object     myUpdateCallback, myEventCallback, myResizeCallback;
+            luabind::object     myUpdateCallback, myEventCallback, myResizeCallback, myDrawCallback;
     };
 }
 

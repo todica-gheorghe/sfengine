@@ -29,7 +29,7 @@ namespace eng
                 sf::IntRect rect;
             };
 
-            Animation(ImagePtr& ptr);
+            Animation(const ImagePtr& ptr);
             Animation(const sf::String& str);
 
             void            Clear();

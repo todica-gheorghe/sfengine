@@ -5,10 +5,19 @@
 #include <iostream>
 #include <cstring>
 
+#include <boost/filesystem.hpp>
+
 Package::Package()
     :   myBuffer(0)
 {
 
+}
+
+Package::Package(const sf::String& filename, const sf::String& directory)
+    :   myBuffer(0)
+{
+    Create(filename, directory);
+    Read(filename);
 }
 
 Package::~Package()
@@ -16,13 +25,28 @@ Package::~Package()
     delete myBuffer;
 }
 
-
-bool    Package::Create(const std::vector<sf::String>& fileList, const sf::String& filename)
+bool    Package::Create(const sf::String& filename, const sf::String& directory)
 {
+    // Create the file list from the directory (using boost::filesystem)
+    if (!boost::filesystem::exists(directory.ToAnsiString()))
+        return false;
+
+    std::vector<std::string> fileList;
+
+    boost::filesystem::directory_iterator end;
+    for (boost::filesystem::directory_iterator it(directory.ToAnsiString()); it != end; ++it)
+    {
+        if (!boost::filesystem::is_directory(it->status()))
+        {
+            fileList.push_back((boost::filesystem::path(directory.ToAnsiString()) / it->filename()).string());
+        }
+    }
+
     PackEntry   entry;
     std::ifstream in;
     std::ofstream out;
     char buffer[1];
+
 
     // HEADER
     memset(&myHeader, 0, sizeof(myHeader));
@@ -33,12 +57,15 @@ bool    Package::Create(const std::vector<sf::String>& fileList, const sf::Strin
     // FILE LIST
     for (sf::Uint8 i = 0; i < fileList.size(); ++i)
     {
-        std::string str = fileList[i].ToAnsiString();
+        std::string str = fileList[i];
         in.open(str.c_str(), std::ifstream::in | std::ifstream::binary);
         if (in.is_open())
         {
             memset(&entry, 0, sizeof(PackEntry));
-            memcpy(entry.name, str.c_str(), strlen(str.c_str()));
+
+            const std::string entryName = boost::filesystem::path(str).filename();
+            memcpy(entry.name, entryName.c_str(), strlen(entryName.c_str()));
+
             in.seekg(0, std::ios::end);
             entry.size = in.tellg();
             entry.offset = 0;
@@ -54,7 +81,7 @@ bool    Package::Create(const std::vector<sf::String>& fileList, const sf::Strin
 
     // UPDATE FILE OFFSETS
     sf::Uint32 actualOffset = sizeof(PackHeader) + myHeader.nbFiles * sizeof(PackEntry);
-    for (sf::Uint8 i = 0; i < myEntries.size(); ++i)
+    for (sf::Uint8 i = 0; i < fileList.size(); ++i)
     {
         myEntries[i].offset = actualOffset;
         actualOffset += myEntries[i].size;
@@ -64,14 +91,14 @@ bool    Package::Create(const std::vector<sf::String>& fileList, const sf::Strin
     out.open(filename.ToAnsiString().c_str(), std::ofstream::out | std::ofstream::binary);
     out.write(reinterpret_cast<char*>(&myHeader), sizeof(PackHeader));
 
-    for (sf::Uint8 i = 0; i < myEntries.size(); ++i)
+    for (sf::Uint8 i = 0; i < fileList.size(); ++i)
     {
         out.write(reinterpret_cast<char*>(&myEntries[i]), sizeof(PackEntry));
     }
 
-    for (sf::Uint8 i = 0; i < myEntries.size(); ++i)
+    for (sf::Uint8 i = 0; i < fileList.size(); ++i)
     {
-        in.open(myEntries[i].name, std::ifstream::in | std::ifstream::binary);
+        in.open(fileList[i].c_str(), std::ifstream::in | std::ifstream::binary);
         if (in.is_open())
         {
             in.seekg(0, std::ios::beg);
@@ -86,6 +113,10 @@ bool    Package::Create(const std::vector<sf::String>& fileList, const sf::Strin
     }
 
     out.close();
+
+    myFilename = filename;
+    myEntries.clear();
+
     return true;
 }
 
@@ -143,7 +174,7 @@ char*   Package::GetFile(const sf::String& name)
                 in.close();
 
                 // decrypte les donnees
-                for (sf::Uint8 j = 0; j < myEntries[i].size; ++j)
+                for (sf::Uint32 j = 0; j < myEntries[i].size; ++j)
                 {
                     myBuffer[j] -= 3;
                 }

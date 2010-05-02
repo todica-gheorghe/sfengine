@@ -25,11 +25,13 @@ namespace eng
 
             lua_State*                  GetLuaState() const;
 
-            void                        LoadScript(const sf::String& script);
+            void                        Run(const sf::String& pack, const sf::String& script);
+            void                        Run(const sf::String& script);
+
+            virtual ~ScriptManager();
 
         protected:
             ScriptManager();
-            virtual ~ScriptManager();
 
         private:
             lua_State                   *myState;
