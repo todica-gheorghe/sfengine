@@ -5,8 +5,6 @@
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <iostream>
 
-
-// 0549069378
 namespace eng
 {
     Object*     Object::myFocusedObject = 0;

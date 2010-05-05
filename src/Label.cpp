@@ -24,11 +24,10 @@ namespace eng
         sf::Uint8 i = 0;
         sf::Color col;
 
-        char *tok = strtok(const_cast<char*>(strColor.ToAnsiString().c_str()),",");
+        char *str = strdup(strColor.ToAnsiString().c_str());
+        char *tok = strtok(str,",");
         while (tok != NULL)
         {
-            std::cout << tok << std::endl;
-
             sf::Uint32 value;
             value = Utils::GetFromString(tok, 255);
 
@@ -45,6 +44,8 @@ namespace eng
             tok = strtok(NULL, ",");
         }
 
+        delete str;
+
         return col;
     }
 
@@ -58,11 +59,23 @@ namespace eng
 
         while (text[i])
         {
-            if (text[i] == '<')
+            if (text[i] == '<' && !isColor)
             {
                 isColor = true;
             }
-            else if (text[i] == '>')
+            else if (text[i] == '<' && isColor)
+            {
+                if (i - 1 >= 0)
+                {
+                    if (text[i - 1] == '<')
+                    {
+                        isColor = false;
+                        ++pos;
+                        newText += '<';
+                    }
+                }
+            }
+            else if (text[i] == '>' && isColor)
             {
                 ++pos;
                 myColors[pos] = ParseColor(bufferColor);
@@ -78,6 +91,7 @@ namespace eng
             {
                 pos += 1;
                 newText += text[i];
+                isColor = false;
             }
             ++i;
         }
