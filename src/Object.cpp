@@ -5,6 +5,8 @@
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <iostream>
 
+#include <SFML/OpenGL.hpp>
+
 namespace eng
 {
     Object*     Object::myFocusedObject = 0;
@@ -20,7 +22,7 @@ namespace eng
             myVisible(true),
             myEnabled(true),
             myFocusable(true),
-            myUpdateCallback()
+            myUseScissor(false)
     {
         myId = NextId;
         ++NextId;
@@ -167,6 +169,17 @@ namespace eng
         return mySize;
     }
 
+    void    Object::SetScissor(int x, int y, int width, int height)
+    {
+        myScissorPos = sf::Vector2i(x, y);
+        myScissorSize = sf::Vector2i(width, height);
+    }
+
+    void    Object::UseScissor(bool use)
+    {
+        myUseScissor = use;
+    }
+
     sf::Vector2f    Object::GetAbsolutePosition() const
     {
         sf::Vector2f absPos = GetPosition();
@@ -249,6 +262,12 @@ namespace eng
         if (!IsVisible())
             return;
 
+        if (myUseScissor)
+        {
+            glEnable(GL_SCISSOR_TEST);
+            glScissor(myScissorPos.x, myScissorPos.y, myScissorSize.x, myScissorSize.y);
+        }
+
         if (myDrawCallback && luabind::type(myDrawCallback) == LUA_TFUNCTION)
             luabind::call_function<void>(myDrawCallback, boost::ref(renderer));
         else
@@ -272,6 +291,11 @@ namespace eng
 
             if (child->IsVisible())
                 target.Draw(*child);
+        }
+
+        if (myUseScissor)
+        {
+            glDisable(GL_SCISSOR_TEST);
         }
     }
 

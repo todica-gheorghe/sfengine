@@ -19,6 +19,8 @@
 
 #include <SFML/Network.hpp>
 
+#include <SFML/OpenGL.hpp>
+
 #include <luabind/operator.hpp>
 #include <luabind/return_reference_to_policy.hpp>
 #include <luabind/out_value_policy.hpp>
@@ -267,20 +269,18 @@ namespace eng
             luabind::class_<sf::IntRect>("IntRect")
                 .def(luabind::constructor<int, int, int, int>())
                 .def("Contains", (bool (sf::IntRect::*)(int, int) const)&sf::IntRect::Contains)
-                .def("GetSize", &sf::IntRect::GetSize)
                 .def_readwrite("Left", &sf::IntRect::Left)
                 .def_readwrite("Top", &sf::IntRect::Top)
-                .def_readwrite("Right", &sf::IntRect::Right)
-                .def_readwrite("Bottom", &sf::IntRect::Bottom),
+                .def_readwrite("Width", &sf::IntRect::Width)
+                .def_readwrite("Height", &sf::IntRect::Height),
 
             luabind::class_<sf::FloatRect>("FloatRect")
                 .def(luabind::constructor<float, float, float, float>())
                 .def("Contains", (bool (sf::FloatRect::*)(float, float) const)&sf::FloatRect::Contains)
-                .def("GetSize", &sf::FloatRect::GetSize)
                 .def_readwrite("Left", &sf::FloatRect::Left)
                 .def_readwrite("Top", &sf::FloatRect::Top)
-                .def_readwrite("Right", &sf::FloatRect::Right)
-                .def_readwrite("Bottom", &sf::FloatRect::Bottom),
+                .def_readwrite("Width", &sf::FloatRect::Width)
+                .def_readwrite("Height", &sf::FloatRect::Height),
 
             luabind::class_<sf::Color>("Color")
                 .def(luabind::constructor<int, int, int>())
@@ -364,7 +364,6 @@ namespace eng
                 .def("SetColor", &sf::Renderer::SetColor)
                 .def("ApplyColor", &sf::Renderer::ApplyColor),
 
-
             luabind::class_<sf::RenderWindow>("RenderWindow")
                 .def(luabind::constructor<sf::VideoMode, const char*>())
                 .def("Clear", &sf::RenderTarget::Clear)
@@ -401,9 +400,12 @@ namespace eng
                 .def("IsEnabled", &eng::Object::IsEnabled)
                 .def("SetZValue", &eng::Object::SetZValue)
                 .def("GetZValue", &eng::Object::GetZValue)
+                .def("GetAbsolutePosition", &eng::Object::GetAbsolutePosition)
                 .def("SetSize", (void (eng::Object::*)(float, float))&eng::Object::SetSize)
                 .def("SetSize", (void (eng::Object::*)(const sf::Vector2f&))&eng::Object::SetSize)
                 .def("GetSize", &eng::Object::GetSize)
+                .def("UseScissor", &eng::Object::UseScissor)
+                .def("SetScissor", &eng::Object::SetScissor)
                 .def("Add", &eng::Object::Add)
                 .def("Remove", &eng::Object::Remove)
                 .def("Clear", &eng::Object::Clear)
@@ -518,58 +520,8 @@ namespace eng
 
             luabind::class_<TiXmlDocument, TiXmlNode>("XmlDocument")
                 .def(luabind::constructor<const char*>())
-                .def("LoadFile", (bool (TiXmlDocument::*)())&TiXmlDocument::LoadFile),
+                .def("LoadFile", (bool (TiXmlDocument::*)())&TiXmlDocument::LoadFile)
 
-            // Network module
-            luabind::class_<sf::IPAddress>("IPAddress")
-                .def(luabind::constructor<const char*>())
-                .def(luabind::constructor<sf::Uint8, sf::Uint8, sf::Uint8, sf::Uint8>())
-                .def("IsValid", &sf::IPAddress::IsValid)
-                .def("ToStdString", &sf::IPAddress::ToString),
-
-
-            luabind::class_<sf::SocketBind>("Socket")
-                .enum_("Socket")
-                [
-                    luabind::value("Done", 0),
-                    luabind::value("NotReady", 1),
-                    luabind::value("Disconnected", 2),
-                    luabind::value("Error", 3)
-                ],
-
-            luabind::class_<sf::SocketTCP>("SocketTCP")
-                .def(luabind::constructor<>())
-                .def("SetBlocking", &sf::SocketTCP::SetBlocking)
-                .def("Connect", &sf::SocketTCP::Connect)
-                .def("Listen", &sf::SocketTCP::Listen)
-                .def("Accept", &sf::SocketTCP::Accept)
-                .def("Send", (sf::Socket::Status (sf::SocketTCP::*)(sf::Packet&))&sf::SocketTCP::Send)
-                .def("Receive", (sf::Socket::Status (sf::SocketTCP::*)(sf::Packet&))&sf::SocketTCP::Receive)
-                .def("Close", &sf::SocketTCP::Close)
-                .def("IsValid", &sf::SocketTCP::IsValid),
-
-            luabind::class_<sf::SocketUDP>("SocketUDP")
-                .def(luabind::constructor<>())
-                .def("SetBlocking", &sf::SocketUDP::SetBlocking)
-                .def("Bind", &sf::SocketUDP::Bind)
-                .def("Unbind", &sf::SocketUDP::Unbind)
-                .def("Send", (sf::Socket::Status (sf::SocketUDP::*)(sf::Packet&, const sf::IPAddress&, unsigned short))&sf::SocketUDP::Send)
-                .def("Receive", (sf::Socket::Status (sf::SocketUDP::*)(sf::Packet&, sf::IPAddress&, unsigned short&))&sf::SocketUDP::Receive)
-                .def("Close", &sf::SocketUDP::Close)
-                .def("IsValid", &sf::SocketUDP::IsValid)
-                .def("GetPort", &sf::SocketUDP::GetPort),
-
-            luabind::class_<sf::SelectorTCP>("SelectorTCP")
-                .def("Add", &sf::SelectorTCP::Add)
-                .def("Remove", &sf::SelectorTCP::Remove)
-                .def("Clear", &sf::SelectorTCP::Clear)
-                .def("GetSocketReady", &sf::SelectorTCP::GetSocketReady),
-
-            luabind::class_<sf::SelectorUDP>("SelectorUDP")
-                .def("Add", &sf::SelectorUDP::Add)
-                .def("Remove", &sf::SelectorUDP::Remove)
-                .def("Clear", &sf::SelectorUDP::Clear)
-                .def("GetSocketReady", &sf::SelectorUDP::GetSocketReady)
         ];
 
         luabind::module(myState, "Utils")

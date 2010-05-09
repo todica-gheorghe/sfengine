@@ -63,6 +63,9 @@ namespace eng
             void                SetEnabled(bool enabled);
             bool                IsEnabled() const;
 
+            void                SetScissor(int x, int y, int width, int height);
+            void                UseScissor(bool use);
+
             void                AddPolicy(ObjectPolicy* policy);
             void                RemovePolicy(ObjectPolicy* policy);
 
@@ -100,6 +103,9 @@ namespace eng
             bool                myVisible;
             bool                myEnabled;
             bool                myFocusable;
+
+            bool                myUseScissor;
+            sf::Vector2i        myScissorPos, myScissorSize;
 
             luabind::object     myUpdateCallback, myEventCallback, myResizeCallback, myDrawCallback;
     };
