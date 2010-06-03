@@ -1,21 +1,22 @@
 
-#include <ScriptManager.hpp>
+#include <sfengine/ScriptManager.hpp>
 
-#include <LogManager.hpp>
-#include <WindowManager.hpp>
-#include <SceneManager.hpp>
-#include <ResourceManager.hpp>
+#include <sfengine/LogManager.hpp>
+#include <sfengine/WindowManager.hpp>
+#include <sfengine/SceneManager.hpp>
+#include <sfengine/ResourceManager.hpp>
 
-#include <AnimatedObject.hpp>
-#include <UserInterface.hpp>
-#include <Icon.hpp>
-#include <Utils.hpp>
-#include <Package.hpp>
+#include <sfengine/AnimatedObject.hpp>
+#include <sfengine/UserInterface.hpp>
+#include <sfengine/Icon.hpp>
+#include <sfengine/TextInput.hpp>
+#include <sfengine/Utils.hpp>
+#include <sfengine/Package.hpp>
 
 #include <SFML/Graphics/View.hpp>
 #include <boost/any.hpp>
 #include <vector>
-#include <xml/tinyxml.h>
+#include <sfengine/xml/tinyxml.h>
 
 #include <SFML/Network.hpp>
 
@@ -38,9 +39,18 @@ namespace sf
 
     };
 
-    class SocketBind
+    class PacketBind : public sf::Packet
     {
+        public:
+            PacketBind();
 
+            void    Append(bool value) { *this << value; }
+
+            void    SetSendCallback(const luabind::object& object);
+            void    SetReceiveCallback(const luabind::object& object);
+
+        private:
+            luabind::object mySendCallback, myReceiveCallback;
     };
 
     static const char* StringToChars(const sf::String& str)
@@ -349,7 +359,8 @@ namespace eng
                 .def(luabind::constructor<>())
                 .def("Reset", &sf::View::Reset)
                 .def("Zoom", &sf::View::Zoom)
-                .def("Rotate", &sf::View::Rotate),
+                .def("Rotate", &sf::View::Rotate)
+                .def("Move", (void (sf::View::*)(float, float))&sf::View::Move),
 
             luabind::class_<sf::Input>("Input")
                 .def(luabind::constructor<>())
@@ -400,6 +411,8 @@ namespace eng
                 .def("IsEnabled", &eng::Object::IsEnabled)
                 .def("SetZValue", &eng::Object::SetZValue)
                 .def("GetZValue", &eng::Object::GetZValue)
+                .def("SetRotation", &eng::Object::SetRotation)
+                .def("GetRotation", &eng::Object::GetRotation)
                 .def("GetAbsolutePosition", &eng::Object::GetAbsolutePosition)
                 .def("SetSize", (void (eng::Object::*)(float, float))&eng::Object::SetSize)
                 .def("SetSize", (void (eng::Object::*)(const sf::Vector2f&))&eng::Object::SetSize)
@@ -503,6 +516,26 @@ namespace eng
                 .def("SetSubRect", &eng::Icon::SetSubRect)
                 .def("GetSubRect", &eng::Icon::GetSubRect),
 
+            luabind::class_<eng::TextInput, eng::Object>("TextInput")
+                .def(luabind::constructor<const char*, unsigned int>())
+                .def("SetText", &eng::TextInput::SetText)
+                .def("GetText", &eng::TextInput::GetText)
+                .def("SetFont", &eng::TextInput::SetFont)
+                .def("GetFont", &eng::TextInput::GetFont)
+                .def("SetTextColor", &eng::TextInput::SetTextColor)
+                .def("GetTextColor", &eng::TextInput::GetTextColor)
+                .def("SetTextSize", &eng::TextInput::SetTextSize)
+                .def("GetTextSize", &eng::TextInput::GetTextSize)
+                .def("SetSelectionColor", &eng::TextInput::SetSelectionColor)
+                .def("GetSelectionColor", &eng::TextInput::GetSelectionColor)
+                .def("SetSelection", &eng::TextInput::SetSelection)
+                .def("SetMaxLength", &eng::TextInput::SetMaxLength)
+                .def("GetMaxLength", &eng::TextInput::GetMaxLength)
+                .def("SetEditable", &eng::TextInput::SetEditable)
+                .def("IsEditable", &eng::TextInput::IsEditable)
+                .def("ClearSelection", &eng::TextInput::ClearSelection)
+                .def("EraseSelection", &eng::TextInput::EraseSelection),
+
             luabind::class_<Package>("Package")
                 .def("GetFile", &Package::GetFile)
                 .def("GetFileSize", &Package::GetFileSize),
@@ -520,7 +553,61 @@ namespace eng
 
             luabind::class_<TiXmlDocument, TiXmlNode>("XmlDocument")
                 .def(luabind::constructor<const char*>())
-                .def("LoadFile", (bool (TiXmlDocument::*)())&TiXmlDocument::LoadFile)
+                .def("LoadFile", (bool (TiXmlDocument::*)())&TiXmlDocument::LoadFile),
+
+            // Network module
+
+            luabind::class_<sf::Socket>("Socket")
+                .def("SetBlocking", &sf::Socket::SetBlocking)
+                .def("IsBlocking", &sf::Socket::IsBlocking)
+                .enum_("Status")
+                [
+                    luabind::value("Done", 0),
+                    luabind::value("NotReady", 1),
+                    luabind::value("Disconnected", 2),
+                    luabind::value("Error", 3)
+                ],
+
+            luabind::class_<sf::TcpSocket, sf::Socket>("TcpSocket")
+                .def(luabind::constructor<>())
+                .def("GetLocalPort", &sf::TcpSocket::GetLocalPort)
+                .def("GetRemoteAddress", &sf::TcpSocket::GetRemoteAddress)
+                .def("GetRemotePort", &sf::TcpSocket::GetRemotePort)
+                .def("Connect", &sf::TcpSocket::Connect)
+                .def("Disconnect", &sf::TcpSocket::Disconnect)
+                .def("Send", (sf::Socket::Status (sf::TcpSocket::*)(sf::Packet&))&sf::TcpSocket::Send)
+                .def("Receive", (sf::Socket::Status (sf::TcpSocket::*)(sf::Packet&))&sf::TcpSocket::Receive),
+
+            luabind::class_<sf::UdpSocket, sf::Socket>("UdpSocket")
+                .def(luabind::constructor<>())
+                .def("GetLocalPort", &sf::UdpSocket::GetLocalPort)
+                .def("Bind", &sf::UdpSocket::Bind)
+                .def("Unbind", &sf::UdpSocket::Unbind)
+                .def("Send", (sf::Socket::Status (sf::UdpSocket::*)(sf::Packet&, const sf::IpAddress&, unsigned short))&sf::UdpSocket::Send)
+                .def("Receive", (sf::Socket::Status (sf::UdpSocket::*)(sf::Packet&, sf::IpAddress&, unsigned short&))&sf::UdpSocket::Receive),
+
+            luabind::class_<sf::IpAddress>("IpAddress")
+                .def(luabind::constructor<>())
+                .def(luabind::constructor<const char*>())
+                .def(luabind::constructor<sf::Uint8,sf::Uint8,sf::Uint8,sf::Uint8>())
+                .def("ToString", &sf::IpAddress::ToString)
+                .def("ToInteger", &sf::IpAddress::ToInteger)
+                //.def_readonly("None", &sf::IpAddress::None)
+                //.def_readonly("LocalHost", &sf::IpAddress::LocalHost)
+                .scope
+                [
+                    //luabind::def("None", &sf::IpAddress::None),
+                    luabind::def("GetLocalAddress", &sf::IpAddress::GetLocalAddress),
+                    luabind::def("GetPublicAddress", &sf::IpAddress::GetPublicAddress)
+                ],
+
+            luabind::class_<sf::Packet>("Packet")
+                .def("Append", &sf::Packet::Append)
+                .def("Clear", &sf::Packet::Clear)
+                .def("GetData", &sf::Packet::GetData)
+                .def("GetDataSize", &sf::Packet::GetDataSize)
+                .def("EndOfPacket", &sf::Packet::EndOfPacket)
+
 
         ];
 

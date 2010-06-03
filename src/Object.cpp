@@ -88,6 +88,11 @@ namespace eng
         return (myHoveredObject == this);
     }
 
+    bool    Object::IsFocused() const
+    {
+        return (myFocusedObject == this);
+    }
+
     void    Object::SetParent(Object* parent)
     {
         myParent = parent;
@@ -154,6 +159,8 @@ namespace eng
     void    Object::SetSize(const sf::Vector2f& size)
     {
         mySize = size;
+
+        OnResize();
 
         if (myResizeCallback && luabind::type(myResizeCallback) == LUA_TFUNCTION)
             luabind::call_function<void>(myResizeCallback);

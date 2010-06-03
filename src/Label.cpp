@@ -19,6 +19,11 @@ namespace eng
         SetColor(sf::Color(0, 0, 0, 0));
     }
 
+    const sf::Text&     Label::GetSFMLText() const
+    {
+        return myText;
+    }
+
     sf::Color   Label::ParseColor(const sf::String& strColor)
     {
         sf::Uint8 i = 0;

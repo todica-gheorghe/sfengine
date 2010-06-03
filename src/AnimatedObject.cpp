@@ -1,5 +1,5 @@
 
-#include <AnimatedObject.hpp>
+#include <sfengine/AnimatedObject.hpp>
 #include <SFML/Graphics/RenderTarget.hpp>
 // CLASSE Animation
 
@@ -183,7 +183,7 @@ namespace eng
 
     void    AnimatedObject::Stop()
     {
-        SetCurrentFrame(0);
+        //SetCurrentFrame(0);
         myElapsedTime = myFrameTime;
         myPaused = true;
     }
@@ -226,6 +226,7 @@ namespace eng
         Object::Render(target, renderer);
 
         renderer.SetColor(mySprite.GetColor());
+
         target.Draw(mySprite);
     }
 
