@@ -1,11 +1,11 @@
 
-#include <Label.hpp>
+#include <sfengine/Label.hpp>
+#include <sfengine/Utils.hpp>
 
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <SFML/Graphics/Renderer.hpp>
 #include <SFML/System/Randomizer.hpp>
 
-#include <Utils.hpp>
 #include <cstring>
 #include <iostream>
 

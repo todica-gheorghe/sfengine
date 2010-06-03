@@ -12,27 +12,21 @@ FILE(
 	GLOB_RECURSE
 	srcLib
 	src/*
-	include/*
 	extlibs/lua/src/*
 	extlibs/luabind/src/*
+	extlibs/tinyxml/src/*
 )
 
 include_directories(include)
 include_directories(extlibs/)
-include_directories(extlibs/luabind)
 include_directories(extlibs/lua/src)
+include_directories(extlibs/luabind)
+include_directories(extlibs/tinyxml/include)
 
 # INCLUDE BOOST
-if (BOOST_INCLUDEDIR)
-	include_directories(${BOOST_INCLUDEDIR})
-else (BOOST_INCLUDEDIR)
-	message(FATAL_ERROR "You have to set up the BOOST_INCLUDEDIR variable")
-endif (BOOST_INCLUDEDIR)
-if (BOOST_LIBRARYDIR)
-	link_directories(${BOOST_LIBRARYDIR})
-else (BOOST_LIBRARYDIR)
-	message(FATAL_ERROR "You have to set up the BOOST_LIBRARYDIR variable")
-endif (BOOST_LIBRARYDIR)
+find_package(Boost 1.41.0)
+include_directories(${BOOST_INCLUDEDIR})
+link_directories(${BOOST_LIBRARYDIR})
 
 # Find SFML
 if (SFML_INCLUDEDIR)

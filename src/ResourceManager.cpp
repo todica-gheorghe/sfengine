@@ -1,6 +1,6 @@
 
 
-#include <ResourceManager.hpp>
+#include <sfengine/ResourceManager.hpp>
 
 namespace eng
 {

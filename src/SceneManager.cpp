@@ -1,7 +1,6 @@
 
-#include <SceneManager.hpp>
-
-#include <WindowManager.hpp>
+#include <sfengine/SceneManager.hpp>
+#include <sfengine/WindowManager.hpp>
 
 #include <iostream>
 

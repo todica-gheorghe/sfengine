@@ -1,8 +1,8 @@
 
-#include <Scene.hpp>
+#include <sfengine/Scene.hpp>
+#include <sfengine/WindowManager.hpp>
 
 #include <algorithm>
-#include <WindowManager.hpp>
 
 namespace eng
 {

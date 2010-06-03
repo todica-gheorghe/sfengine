@@ -1,6 +1,6 @@
 
-#include <Object.hpp>
-#include <ObjectPolicy.hpp>
+#include <sfengine/Object.hpp>
+#include <sfengine/ObjectPolicy.hpp>
 
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <iostream>

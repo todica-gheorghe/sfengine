@@ -1,7 +1,7 @@
 #ifndef OBJECTPOLICY_HPP_INCLUDED
 #define OBJECTPOLICY_HPP_INCLUDED
 
-#include <Object.hpp>
+#include <sfengine/Object.hpp>
 #include <SFML/Window/Event.hpp>
 
 namespace eng

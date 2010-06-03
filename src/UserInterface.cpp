@@ -1,8 +1,8 @@
 
-#include <UserInterface.hpp>
+#include <sfengine/UserInterface.hpp>
+#include <sfengine/SceneManager.hpp>
+#include <sfengine/WindowManager.hpp>
 
-#include <SceneManager.hpp>
-#include <WindowManager.hpp>
 #include <iostream>
 
 eng::Object* UserInterface::myLastHovered = 0;

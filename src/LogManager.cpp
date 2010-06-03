@@ -1,6 +1,6 @@
 
 
-#include <LogManager.hpp>
+#include <sfengine/LogManager.hpp>
 
 namespace eng
 {

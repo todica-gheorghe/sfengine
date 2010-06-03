@@ -16,7 +16,8 @@
 #include <SFML/Graphics/View.hpp>
 #include <boost/any.hpp>
 #include <vector>
-#include <sfengine/xml/tinyxml.h>
+
+#include <xml/tinyxml.h>
 
 #include <SFML/Network.hpp>
 

@@ -1,6 +1,6 @@
 
 
-#include <Icon.hpp>
+#include <sfengine/Icon.hpp>
 
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <SFML/Graphics/Renderer.hpp>

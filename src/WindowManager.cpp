@@ -1,5 +1,5 @@
 
-#include <WindowManager.hpp>
+#include <sfengine/WindowManager.hpp>
 
 namespace eng
 {
