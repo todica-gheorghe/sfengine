@@ -17,7 +17,7 @@
 #include <boost/any.hpp>
 #include <vector>
 
-#include <xml/tinyxml.h>
+#include <tinyxml.h>
 
 #include <SFML/Network.hpp>
 

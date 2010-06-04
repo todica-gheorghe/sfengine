@@ -52,7 +52,4 @@ add_library(
 
 target_link_libraries(
 	sfengine-s
-	sfml-graphics
-	sfml-window
-	sfml-system
 )
